@@ -1,6 +1,6 @@
 'use strict';
 
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const DEV_JWT_SECRET = 'dev-only-insecure-secret-do-not-use-in-production';
 

@@ -4,11 +4,11 @@
   "description": "Real-time driver location tracking backend (MightyByte take-home): REST + Socket.IO",
   "main": "src/server.js",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.12"
   },
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "dev": "node --watch src/server.js",
     "test": "NODE_ENV=test node --test --test-reporter=spec \"tests/*.test.js\"",
     "test:watch": "NODE_ENV=test node --test --watch \"tests/*.test.js\"",
     "lint": "eslint .",
@@ -26,21 +26,20 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "helmet": "^7.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "socket.io": "^4.7.4"
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.3.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "socket.io": "^4.8.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
     "eslint": "^9.12.0",
     "eslint-plugin-react": "^7.37.5",
-    "globals": "^15.11.0",
-    "nodemon": "^3.0.2",
-    "prettier": "^3.3.3",
-    "socket.io-client": "^4.7.4",
-    "supertest": "^7.0.0"
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
+    "socket.io-client": "^4.8.4",
+    "supertest": "^7.3.2"
   }
 }
