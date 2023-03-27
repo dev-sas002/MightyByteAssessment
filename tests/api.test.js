@@ -284,3 +284,26 @@ test('an oversized body is rejected rather than buffered', async () => {
     .send({ lat: 40.7, lng: -74, padding: 'x'.repeat(64 * 1024) })
     .expect(413); // express.json raises a PayloadTooLargeError carrying status 413
 });
+
+test('malformed JSON is a 400 client error, not an internal server error', async () => {
+  const token = await loginAs();
+
+  const { body } = await request(app)
+    .post('/api/driver/update')
+    .set('Authorization', `Bearer ${token}`)
+    .set('Content-Type', 'application/json')
+    .send('{"lat": 40.7,')
+    .expect(400);
+
+  assert.notEqual(body.error, 'Internal server error');
+  assert.match(body.error, /JSON/);
+});
+
+test('an oversized body explains the limit instead of reporting a server fault', async () => {
+  const { body } = await request(app)
+    .post('/api/login')
+    .send({ username: 'driver1', password: 'x'.repeat(64 * 1024) })
+    .expect(413);
+
+  assert.equal(body.error, 'request entity too large');
+});

@@ -101,8 +101,19 @@ function createApp() {
 
   // Express identifies an error handler by its arity, so `next` must stay.
   app.use((error, req, res, next) => {
+    const status = Number.isInteger(error.status) ? error.status : 500;
+
+    // body-parser marks malformed JSON (400) and oversized bodies (413) as safe
+    // to expose. Those are the caller's mistake, not a server fault, so they
+    // get their own message and stay out of the error log.
+    if (status < 500 && error.expose) {
+      logger.debug(`Rejected ${req.method} ${req.path}: ${error.message}`);
+      res.status(status).json({ error: error.message, timestamp: new Date().toISOString() });
+      return;
+    }
+
     logger.error('Unhandled error:', error);
-    res.status(error.status || 500).json({
+    res.status(status).json({
       error: 'Internal server error',
       message: config.isProduction ? 'Something went wrong' : error.message,
       timestamp: new Date().toISOString(),
