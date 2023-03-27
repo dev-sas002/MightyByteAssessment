@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output
+frontend/build/
+dist/
+
+# Environment (keep the documented template)
+.env
+.env.*
+!.env.example
+
+# Python virtualenv left over from tooling (not part of this project)
+project_venv/
+.venv/
+
+# Logs, coverage and caches
+*.log
+npm-debug.log*
+logs/
+coverage/
+.nyc_output/
+.eslintcache
+.cache/
+tmp/
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
