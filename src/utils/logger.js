@@ -14,9 +14,8 @@ let threshold = resolveLevel();
 /**
  * Minimal level-aware logger.
  *
- * The original code called `console.log` from the store, the controllers and
- * both socket handlers, which made the test output unreadable and could not be
- * turned down in production. One seam, one switch.
+ * Every module logs through here so that the test run stays quiet and
+ * production verbosity is one LOG_LEVEL switch.
  */
 const logger = {
   /** @param {keyof typeof LEVELS} level */

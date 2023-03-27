@@ -27,9 +27,8 @@ function Dashboard({ user, onLogout }) {
   const socketRef = useRef(null);
   const notificationTimersRef = useRef(new Map());
 
-  // The socket handlers are registered once, so they must not close over
-  // `selectedDriverId` directly: the original code compared against the value
-  // captured on first render and therefore never cleared a disconnected driver.
+  // The socket handlers are registered once, so they read the selection through
+  // a ref; closing over `selectedDriverId` would freeze its first-render value.
   const selectedDriverIdRef = useRef('');
   useEffect(() => {
     selectedDriverIdRef.current = selectedDriverId;

@@ -236,8 +236,8 @@ test('POST /api/logout revokes the token so it can no longer be replayed', async
 
   await request(app).post('/api/logout').set('Authorization', `Bearer ${token}`).expect(200);
 
-  // This is the regression the original code had: the JWT was still inside its
-  // 5-minute window, so every authenticated route kept accepting it after logout.
+  // The JWT is still inside its 5-minute window here; only the server-side
+  // revocation record stops it from being replayed.
   await request(app)
     .post('/api/driver/update')
     .set('Authorization', `Bearer ${token}`)

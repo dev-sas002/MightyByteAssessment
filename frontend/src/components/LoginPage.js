@@ -8,8 +8,8 @@ import './LoginPage.css';
  * Dashboard sign-in.
  *
  * The dashboard has no separate operator directory: it authenticates against
- * the same `POST /api/login` endpoint as the driver app. The original copy
- * invited "any username and password", which the server has never accepted.
+ * the same `POST /api/login` endpoint as the driver app, so any seeded driver
+ * account opens it.
  */
 function LoginPage({ onLogin }) {
   const [credentials, setCredentials] = useState({ username: '', password: '' });

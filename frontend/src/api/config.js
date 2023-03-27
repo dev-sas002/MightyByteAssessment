@@ -1,9 +1,8 @@
 /**
  * Single source of truth for where the backend lives.
  *
- * Every component used to hardcode `http://localhost:3001`, which meant the
- * `proxy` entry in package.json was dead config and the build could not be
- * pointed at a deployed API.
+ * Components import these instead of hardcoding a host, so one build-time
+ * variable points the client at any deployed API.
  */
 export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 

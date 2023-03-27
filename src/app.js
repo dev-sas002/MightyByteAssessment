@@ -87,9 +87,8 @@ function createApp() {
   app.use('/api', authRoutes);
   app.use('/api/driver', driverRoutes);
 
-  // 404 before the error handler: Express only enters a 4-arity handler when
-  // `next(err)` was called, so the original ordering left the fallback
-  // unreachable for anything that threw after routing.
+  // Express only enters the 4-arity handler below after `next(err)`, so the
+  // 404 fallback has to be an ordinary middleware registered before it.
   app.use((req, res) => {
     res.status(404).json({
       error: 'Endpoint not found',

@@ -25,9 +25,8 @@ const driverIdFromRoom = (room) =>
  *           `subscribed`, `unsubscribed`, `driver_info`, `driver_not_found`, `pong`, `error`
  *
  * Fan-out uses one Socket.IO room per driver, so a location update touches only
- * the clients watching that driver. The original implementation gave every
- * connected client its own pair of `setInterval` timers and broadcast every
- * update to every client.
+ * the clients watching that driver, and one shared sweep timer serves the
+ * whole namespace instead of one per client.
  *
  * @param {import('socket.io').Server} io
  * @param {{store?: object, events?: import('node:events').EventEmitter}} [deps]

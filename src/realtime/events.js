@@ -6,8 +6,8 @@ const { EventEmitter } = require('node:events');
  * Domain event names published by the service layer.
  *
  * The service layer never imports Socket.IO and the transport layer never
- * imports the store. They meet here. This is what removes the original
- * `require('../server')` cycle inside the controller.
+ * imports the store. They meet here, which keeps the controllers free of any
+ * dependency on the server module.
  */
 const DriverEvents = Object.freeze({
   LOCATION_UPDATED: 'driver.location_updated',

@@ -44,8 +44,8 @@ function verifyToken(token) {
 /**
  * Extracts a bearer token from an Authorization header.
  *
- * The original implementation used `header.split(' ')[1]`, which accepted any
- * scheme (`Basic <jwt>`) and produced `undefined` for a bare `Bearer`.
+ * Anchored on the scheme so that `Basic <jwt>` is refused and a bare `Bearer`
+ * yields null rather than `undefined`.
  *
  * @param {string|undefined} header
  * @returns {string|null}

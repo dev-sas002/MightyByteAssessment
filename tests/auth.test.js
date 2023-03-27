@@ -24,8 +24,8 @@ test('generateToken embeds the driver claims and a matching expiry record', () =
   assert.equal(claims.name, 'John Smith');
   assert.equal(expiresInSeconds, config.jwtExpirySeconds);
 
-  // The store record and the JWT `exp` claim come from one config value; this
-  // guards the drift the original code had between `5m` and a hardcoded +5min.
+  // The store record and the JWT `exp` claim come from one config value, so
+  // they must agree to within clock granularity.
   const skewMs = Math.abs(expiresAt.getTime() - claims.exp * 1000);
   assert.ok(skewMs <= 1500, `expiry skew was ${skewMs}ms`);
   assert.ok(expiresAt.getTime() >= before + config.jwtExpirySeconds * 1000 - 1500);
@@ -52,8 +52,7 @@ test('extractBearerToken accepts only a well-formed Bearer header', () => {
   assert.equal(extractBearerToken('bearer abc.def.ghi'), 'abc.def.ghi');
   assert.equal(extractBearerToken('  Bearer   abc.def.ghi  '), 'abc.def.ghi');
 
-  // The original `split(' ')[1]` accepted any scheme and yielded `undefined`
-  // for a bare keyword, which then reached jwt.verify.
+  // Another scheme, or a bare keyword, must never reach jwt.verify.
   assert.equal(extractBearerToken('Basic abc.def.ghi'), null);
   assert.equal(extractBearerToken('Bearer'), null);
   assert.equal(extractBearerToken('Bearer '), null);

@@ -14,8 +14,7 @@ import './DriverApp.css';
  *
  * Signs in as a seeded driver and reports a synthetic position on a fixed
  * cadence. Reports go over the WebSocket while it is connected and fall back to
- * `POST /api/driver/update` otherwise; the original code always sent both, so
- * every tick wrote the same fix twice.
+ * `POST /api/driver/update` otherwise, never both, so each tick writes one fix.
  */
 function DriverApp() {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
@@ -34,9 +33,9 @@ function DriverApp() {
       intervalRef.current = null;
     }
     if (socketRef.current) {
-      // Disconnecting is what takes the driver offline server-side. The original
-      // code also called POST /api/logout here, which revoked the access token
-      // and made it impossible to start sharing again without signing back in.
+      // Disconnecting is what takes the driver offline server-side. Logging out
+      // here as well would revoke the token and block a restart without a new
+      // sign-in.
       socketRef.current.disconnect();
       socketRef.current = null;
     }

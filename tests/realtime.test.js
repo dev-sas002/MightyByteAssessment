@@ -114,8 +114,7 @@ test('a location_update is acknowledged with a timestamped location', async () =
 
   assert.equal(ack.success, true);
   assert.equal(ack.location.lat, 40.7128);
-  // The driver client renders this field; the original payload omitted it and
-  // the UI showed "Invalid Date".
+  // The driver client renders this field, so it must always parse.
   assert.ok(!Number.isNaN(Date.parse(ack.location.timestamp)));
   assert.equal(driverStore.isDriverOnline('driver1'), true);
 });
@@ -303,8 +302,7 @@ test('a reconnecting driver is not taken offline by their stale socket', async (
   second.emit('location_update', { lat: 40.7, lng: -74 });
   await once(second, 'location_updated');
 
-  // Closing the *older* connection must not evict the live one. The original
-  // handler called removeDriver() unconditionally on every disconnect.
+  // Closing the *older* connection must not evict the live one.
   const dashboard = open('/dashboard');
   await once(dashboard, 'connected');
   first.close();

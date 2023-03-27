@@ -42,8 +42,7 @@ function validateCoordinates(lat, lng) {
  * Applies a location update and publishes the resulting domain events.
  *
  * This is the single implementation shared by `POST /api/driver/update` and the
- * `location_update` socket event. Previously each transport carried its own
- * copy, and they had already started to diverge.
+ * `location_update` socket event, so the two transports cannot drift apart.
  *
  * @param {{driverId: string, lat: unknown, lng: unknown}} input
  * @param {{store?: object, events?: import('node:events').EventEmitter}} [deps]
