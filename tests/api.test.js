@@ -6,6 +6,7 @@ const request = require('supertest');
 
 const { createApp } = require('../src/app');
 const driverStore = require('../src/models/driverStore');
+const { driverEvents, DriverEvents } = require('../src/realtime/events');
 
 const app = createApp();
 
@@ -260,6 +261,18 @@ test('POST /api/logout also takes the driver offline', async () => {
   assert.equal(driverStore.isDriverOnline('driver1'), false);
   const { body } = await request(app).get('/api/driver/online').expect(200);
   assert.equal(body.count, 0);
+});
+
+test('POST /api/logout does not re-announce a driver who is already offline', async (t) => {
+  const token = await loginAs('driver3', 'password3');
+  const announced = [];
+  const record = (payload) => announced.push(payload.driverId);
+  driverEvents.on(DriverEvents.WENT_OFFLINE, record);
+  t.after(() => driverEvents.off(DriverEvents.WENT_OFFLINE, record));
+
+  await request(app).post('/api/logout').set('Authorization', `Bearer ${token}`).expect(200);
+
+  assert.deepEqual(announced, []);
 });
 
 test('logging out one driver leaves another session untouched', async () => {

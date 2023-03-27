@@ -39,8 +39,15 @@ function login(req, res) {
  * POST /api/logout — revoke the presented token and take the driver offline.
  */
 function logout(req, res) {
+  const { driverId } = req.user;
   driverStore.removeActiveToken(req.token);
-  locationService.markOffline(req.user.driverId, { reason: 'logout' });
+
+  // The driver app closes its socket before logging out, and that already took
+  // the driver offline. Announcing it a second time would repeat the dashboard
+  // notice and roster broadcast for nothing.
+  if (driverStore.getDriverLocation(driverId) || driverStore.getDriverSocket(driverId)) {
+    locationService.markOffline(driverId, { reason: 'logout' });
+  }
 
   return res.json({ success: true, message: 'Logged out successfully' });
 }
