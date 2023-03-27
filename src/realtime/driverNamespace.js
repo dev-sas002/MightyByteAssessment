@@ -76,10 +76,15 @@ function registerDriverNamespace(io, deps = {}) {
     socket.on('disconnect', (reason) => {
       logger.info(`Driver ${driverName} (${driverId}) disconnected: ${reason}`);
 
-      if (store.getDriverSocket(driverId) !== socket.id) {
+      const registered = store.getDriverSocket(driverId);
+      if (registered && registered !== socket.id) {
         // A newer connection already replaced this one; leave it alone.
         return;
       }
+      // `stop_sharing` clears the registration. If the driver resumed on this
+      // same socket there is a fix to retract; if not, they are already offline.
+      if (!registered && !store.getDriverLocation(driverId)) return;
+
       markOffline(driverId, { reason });
     });
 

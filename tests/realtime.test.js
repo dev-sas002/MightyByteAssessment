@@ -312,3 +312,42 @@ test('a reconnecting driver is not taken offline by their stale socket', async (
 
   assert.equal(driverStore.isDriverOnline('driver1'), true);
 });
+
+test('a driver who stops and resumes sharing still goes offline on disconnect', async () => {
+  const client = open('/driver/update', { auth: { token: issueToken('driver2') } });
+  await once(client, 'connected');
+
+  client.emit('stop_sharing');
+  await once(client, 'sharing_stopped');
+
+  client.emit('location_update', { lat: 40.71, lng: -73.99 });
+  await once(client, 'location_updated');
+  assert.equal(driverStore.isDriverOnline('driver2'), true);
+
+  const dashboard = open('/dashboard');
+  await once(dashboard, 'connected');
+  const wentOffline = once(dashboard, 'driver_disconnected');
+  client.close();
+
+  assert.equal((await wentOffline).driverId, 'driver2');
+  assert.equal(driverStore.isDriverOnline('driver2'), false);
+});
+
+test('closing a socket after stop_sharing does not announce the driver offline twice', async () => {
+  const client = open('/driver/update', { auth: { token: issueToken('driver3') } });
+  await once(client, 'connected');
+  client.emit('location_update', { lat: 40.72, lng: -73.98 });
+  await once(client, 'location_updated');
+
+  const dashboard = open('/dashboard');
+  await once(dashboard, 'connected');
+  const announcements = [];
+  dashboard.on('driver_disconnected', (payload) => announcements.push(payload.reason));
+
+  client.emit('stop_sharing');
+  await once(client, 'sharing_stopped');
+  client.close();
+  await new Promise((resolve) => setTimeout(resolve, 250));
+
+  assert.deepEqual(announcements, ['stop_sharing']);
+});
