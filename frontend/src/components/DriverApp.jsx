@@ -43,7 +43,7 @@ function DriverApp() {
 
     setIsSharing(false);
     setCurrentLocation(null);
-    setStatus('signed in - not sharing');
+    setStatus('not sharing');
   }, []);
 
   const handleLogin = async (event) => {
@@ -55,7 +55,7 @@ function DriverApp() {
       const response = await axios.post(`${API_BASE_URL}/api/login`, credentials);
       if (response.data.success) {
         setSession({ token: response.data.token, profile: response.data.profile });
-        setStatus('signed in - not sharing');
+        setStatus('not sharing');
       }
     } catch (requestError) {
       setError(requestError.response?.data?.error || 'Login failed');

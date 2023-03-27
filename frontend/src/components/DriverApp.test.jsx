@@ -90,6 +90,7 @@ describe('DriverApp', () => {
     await userEvent.click(screen.getByRole('button', { name: /stop sharing/i }));
 
     expect(socket.disconnect).toHaveBeenCalled();
+    expect(screen.getByText('not sharing')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /start sharing/i })).toBeInTheDocument();
     expect(axios.post).not.toHaveBeenCalledWith(
       expect.stringMatching(/\/api\/logout$/),
