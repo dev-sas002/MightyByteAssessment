@@ -14,7 +14,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Stage 2 - install everything and run the suite.
 #
 # Not a dependency of the runtime stage, so a plain `docker build` skips it.
-# Run it explicitly in CI:  docker build --target test .
+# Run it explicitly with:  docker build --target test .
 ###############################################################################
 FROM node:22-alpine AS test
 

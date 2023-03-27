@@ -30,3 +30,16 @@ services:
     # scaling story today. See "Limitations" in the README.
     deploy:
       replicas: 1
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+    image: ride-share-frontend:local
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:80"
+    depends_on:
+      api:
+        condition: service_healthy
