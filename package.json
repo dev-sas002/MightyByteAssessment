@@ -13,8 +13,8 @@
     "test:watch": "NODE_ENV=test node --test --watch \"tests/*.test.js\"",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"frontend/src/**/*.js\"",
-    "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.js\" \"frontend/src/**/*.js\""
+    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"frontend/src/**/*.{js,jsx}\" frontend/vite.config.js",
+    "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.js\" \"frontend/src/**/*.{js,jsx}\" frontend/vite.config.js"
   },
   "keywords": [
     "ride-sharing",

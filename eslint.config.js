@@ -36,13 +36,13 @@ module.exports = [
   // Frontend: ES modules with JSX in the browser. Parsed by the default parser
   // with JSX enabled, so no extra plugin is needed just to catch real errors.
   {
-    files: ['frontend/src/**/*.js'],
+    files: ['frontend/src/**/*.{js,jsx}', 'frontend/vite.config.js'],
     ...js.configs.recommended,
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
       parserOptions: { ecmaFeatures: { jsx: true } },
-      globals: { ...globals.browser, process: 'readonly' },
+      globals: { ...globals.browser },
     },
     plugins: { react },
     settings: { react: { version: 'detect' } },

@@ -4,7 +4,7 @@
  * Components import these instead of hardcoding a host, so one build-time
  * variable points the client at any deployed API.
  */
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const DASHBOARD_NAMESPACE_URL = `${API_BASE_URL}/dashboard`;
 export const DRIVER_NAMESPACE_URL = `${API_BASE_URL}/driver/update`;

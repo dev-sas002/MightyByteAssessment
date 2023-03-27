@@ -17,12 +17,12 @@ npm run dev          # API and sockets on port 3001
 
 cd frontend
 npm install
-npm start            # React app on port 3000
+npm run dev          # React app on port 3000
 ```
 
 Open http://localhost:3000, choose "Driver app", sign in as `driver1` / `password1` and start sharing location. In another tab, sign in on the Dashboard with the same account and pick the driver from the list. Seeded accounts are `driver1` to `driver3` with passwords `password1` to `password3` (see `src/utils/credentials.js`).
 
-The client uses `REACT_APP_API_URL`, defaulting to `http://localhost:3001`.
+The client reads `VITE_API_URL` at build time, defaulting to `http://localhost:3001`.
 
 ## How it works
 
@@ -37,7 +37,8 @@ All state is held in memory in `src/models/driverStore.js`.
 ## Tests and tooling
 
 ```bash
-npm test          # node:test, backend only
+npm test          # node:test, backend
+(cd frontend && npm test)   # Vitest + Testing Library
 npm run lint
 npm run format
 ```
