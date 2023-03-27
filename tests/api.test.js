@@ -275,6 +275,15 @@ test('POST /api/logout does not re-announce a driver who is already offline', as
   assert.deepEqual(announced, []);
 });
 
+test('logging out on one device leaves a second sign-in from the same second working', async () => {
+  const [first, second] = await Promise.all([loginAs(), loginAs()]);
+  assert.notEqual(first, second);
+
+  await request(app).post('/api/logout').set('Authorization', `Bearer ${first}`).expect(200);
+
+  await request(app).get('/api/profile').set('Authorization', `Bearer ${second}`).expect(200);
+});
+
 test('logging out one driver leaves another session untouched', async () => {
   const tokenOne = await loginAs('driver1', 'password1');
   const tokenTwo = await loginAs('driver2', 'password2');

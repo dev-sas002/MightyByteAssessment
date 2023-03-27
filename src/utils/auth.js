@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('node:crypto');
 const jwt = require('jsonwebtoken');
 
 const config = require('../config/config');
@@ -18,7 +19,9 @@ function generateToken(driverProfile) {
       vehicle: driverProfile.vehicle,
     },
     config.jwtSecret,
-    { expiresIn: config.jwtExpirySeconds }
+    // Without a unique id, two sign-ins in the same second produce the same
+    // token, and logging out of one would revoke the other.
+    { expiresIn: config.jwtExpirySeconds, jwtid: crypto.randomUUID() }
   );
 
   return {
