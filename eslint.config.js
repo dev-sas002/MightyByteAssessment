@@ -45,7 +45,9 @@ module.exports = [
       globals: { ...globals.browser },
     },
     plugins: { react },
-    settings: { react: { version: 'detect' } },
+    // Pinned rather than 'detect': the root lint runs before frontend/ has its
+    // own node_modules, and detection would then warn on every run.
+    settings: { react: { version: '18.3' } },
     rules: {
       ...js.configs.recommended.rules,
       ...react.configs.flat.recommended.rules,
