@@ -2,10 +2,19 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import io from 'socket.io-client';
 import { DASHBOARD_NAMESPACE_URL } from '../api/config';
+import ServiceAreaMap from './ServiceAreaMap';
 import './Dashboard.css';
 
 const MAX_NOTIFICATIONS = 5;
 const NOTIFICATION_TTL_MS = 5000;
+const TRAIL_LENGTH = 12;
+
+const STATUS_LABELS = {
+  connecting: 'Connecting',
+  connected: 'Live',
+  disconnected: 'Reconnecting',
+  error: 'Unreachable',
+};
 
 /**
  * Monitoring view.
@@ -19,6 +28,7 @@ function Dashboard({ user, onLogout }) {
   const [onlineDrivers, setOnlineDrivers] = useState([]);
   const [selectedDriverId, setSelectedDriverId] = useState('');
   const [selectedDriverData, setSelectedDriverData] = useState(null);
+  const [trail, setTrail] = useState([]);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [lastUpdate, setLastUpdate] = useState(null);
   const [error, setError] = useState('');
@@ -74,13 +84,17 @@ function Dashboard({ user, onLogout }) {
     });
 
     socket.on('driver_data', (data) => {
+      if (data.driverId !== selectedDriverIdRef.current) return;
       setSelectedDriverData(data);
+      if (data.location) {
+        setTrail((previous) => [...previous, data.location].slice(-TRAIL_LENGTH));
+      }
       setLastUpdate(new Date().toISOString());
       setError('');
     });
 
     socket.on('driver_offline', (data) => {
-      setSelectedDriverData(null);
+      if (data.driverId === selectedDriverIdRef.current) setSelectedDriverData(null);
       addNotification(`Driver ${data.driverId} is offline`, 'warning');
     });
 
@@ -126,8 +140,12 @@ function Dashboard({ user, onLogout }) {
 
     if (selectedDriverId) socket.emit('unsubscribe');
 
+    // Updated here as well as in the effect, so a fix that arrives before the
+    // re-render is matched against the new selection.
+    selectedDriverIdRef.current = driverId;
     setSelectedDriverId(driverId);
     setSelectedDriverData(null);
+    setTrail([]);
     setError('');
 
     if (driverId) socket.emit('subscribe', { driverId });
@@ -136,182 +154,169 @@ function Dashboard({ user, onLogout }) {
   const refreshDriversList = () => socketRef.current?.emit('get_online_drivers');
 
   const isConnected = connectionStatus === 'connected';
+  const selectedDriver = onlineDrivers.find((driver) => driver.driverId === selectedDriverId);
+  const selectedName =
+    selectedDriverData?.profile?.name || selectedDriver?.profile?.name || selectedDriverId;
 
   return (
     <div className="dashboard">
-      <header className="dashboard-header">
-        <div className="header-content">
-          <h1 className="dashboard-title">Ride Share Dashboard</h1>
-          <div className="header-info">
-            <span className="user-info">Signed in as {user.username}</span>
-            <div className={`connection-status status-${connectionStatus}`}>
-              <span className="status-dot" aria-hidden="true" />
-              {connectionStatus}
-            </div>
-            <button type="button" className="btn btn-danger" onClick={onLogout}>
-              Sign out
+      <div className="dashboard-bar">
+        <h1 className="dashboard-title">Dispatch</h1>
+        <div className="dashboard-session">
+          <span className={`connection connection-${connectionStatus}`}>
+            <span className="status-dot" aria-hidden="true" />
+            {STATUS_LABELS[connectionStatus] || connectionStatus}
+          </span>
+          <span className="muted">Signed in as {user.username}</span>
+          <button type="button" className="btn btn-quiet" onClick={onLogout}>
+            Sign out
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="error-message" role="alert">
+          {error}
+        </div>
+      )}
+
+      <div className="dashboard-grid">
+        <section className="panel roster" aria-labelledby="roster-title">
+          <div className="panel-header">
+            <h2 id="roster-title">
+              Online drivers <span className="count">{onlineDrivers.length}</span>
+            </h2>
+            <button
+              type="button"
+              className="btn btn-quiet btn-small"
+              onClick={refreshDriversList}
+              disabled={!isConnected}
+            >
+              Refresh
             </button>
           </div>
-        </div>
-      </header>
 
-      <main className="dashboard-main">
-        <div className="dashboard-grid">
-          <section className="card drivers-card">
-            <div className="card-header">
-              <h2 className="card-title">Online drivers</h2>
-              <button
-                type="button"
-                className="btn btn-secondary refresh-btn"
-                onClick={refreshDriversList}
-                disabled={!isConnected}
-              >
-                Refresh
-              </button>
+          {connectionStatus === 'connecting' ? (
+            <p className="empty-state">
+              <span className="loading-spinner" aria-hidden="true" />
+              Connecting to the tracking service...
+            </p>
+          ) : onlineDrivers.length === 0 ? (
+            <div className="empty-state">
+              <p>No drivers online</p>
+              <small>Drivers appear here once they report a position.</small>
             </div>
-
-            <div className="drivers-list">
-              {onlineDrivers.length === 0 ? (
-                <div className="no-drivers">
-                  <p>No drivers online</p>
-                  <small>Drivers appear here once they report a position.</small>
-                </div>
-              ) : (
-                onlineDrivers.map((driver) => (
-                  <button
-                    type="button"
-                    key={driver.driverId}
-                    className={`driver-item ${selectedDriverId === driver.driverId ? 'selected' : ''}`}
-                    onClick={() => handleDriverSelection(driver.driverId)}
-                  >
-                    <span className="driver-info">
+          ) : (
+            <ul className="roster-list">
+              {onlineDrivers.map((driver) => {
+                const isSelected = selectedDriverId === driver.driverId;
+                return (
+                  <li key={driver.driverId}>
+                    <button
+                      type="button"
+                      className="roster-item"
+                      aria-pressed={isSelected}
+                      onClick={() => handleDriverSelection(isSelected ? '' : driver.driverId)}
+                    >
                       <span className="status-dot online" aria-hidden="true" />
-                      <span>
-                        <span className="driver-name">
+                      <span className="roster-text">
+                        <span className="roster-name">
                           {driver.profile?.name || driver.driverId}
                         </span>
-                        <span className="driver-vehicle">
+                        <span className="roster-vehicle">
                           {driver.profile?.vehicle || 'Unknown vehicle'}
                         </span>
                       </span>
-                    </span>
-                    <span className="driver-status">
-                      <span className="status-online">Online</span>
-                      <small>Last seen {formatTime(driver.lastSeen)}</small>
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-          </section>
+                      <span className="roster-seen">
+                        <span className="visually-hidden">Last seen </span>
+                        {formatTime(driver.lastSeen)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
 
-          <section className="card selection-card">
-            <div className="card-header">
-              <h2 className="card-title">Select a driver</h2>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="driverSelect" className="form-label">
-                Driver to track
-              </label>
-              <select
-                id="driverSelect"
-                className="form-select"
-                value={selectedDriverId}
-                onChange={(event) => handleDriverSelection(event.target.value)}
-                disabled={!isConnected}
-              >
-                <option value="">-- none --</option>
-                {onlineDrivers.map((driver) => (
-                  <option key={driver.driverId} value={driver.driverId}>
-                    {driver.profile?.name || driver.driverId} (
-                    {driver.profile?.vehicle || 'Unknown'})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {selectedDriverId && (
-              <div className="selected-driver-info">
-                <h3>Tracking {selectedDriverData?.profile?.name || selectedDriverId}</h3>
-                <p>Positions are pushed as the driver reports them.</p>
-              </div>
-            )}
-          </section>
-
-          <section className="card location-card">
-            <div className="card-header">
-              <h2 className="card-title">Driver location</h2>
-              {lastUpdate && <small>Updated {formatTime(lastUpdate)}</small>}
-            </div>
-
-            {error && (
-              <div className="error-message" role="alert">
-                {error}
-              </div>
-            )}
-
-            {!selectedDriverId ? (
-              <div className="no-selection">
-                <p>Select a driver to view their position.</p>
-              </div>
-            ) : selectedDriverData ? (
-              <dl className="location-grid">
-                <LocationRow label="Driver" value={selectedDriverData.profile?.name || 'Unknown'} />
-                <LocationRow
-                  label="Vehicle"
-                  value={selectedDriverData.profile?.vehicle || 'Unknown'}
-                />
-                <LocationRow
-                  label="Latitude"
-                  value={formatCoordinate(selectedDriverData.location?.lat)}
-                  mono
-                />
-                <LocationRow
-                  label="Longitude"
-                  value={formatCoordinate(selectedDriverData.location?.lng)}
-                  mono
-                />
-                <LocationRow
-                  label="Status"
-                  value={selectedDriverData.isOnline ? 'Online' : 'Offline'}
-                />
-                <LocationRow
-                  label="Reported"
-                  value={formatTime(selectedDriverData.location?.timestamp)}
-                />
-              </dl>
-            ) : (
-              <div className="loading-location">
-                <span className="loading-spinner" aria-hidden="true" />
-                <p>Waiting for the first position...</p>
-              </div>
-            )}
-          </section>
-        </div>
-
-        {notifications.length > 0 && (
-          <div className="notifications" role="status" aria-live="polite">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`notification notification-${notification.type}`}
-              >
-                {notification.message}
-              </div>
-            ))}
+        <section className="panel tracking" aria-labelledby="tracking-title">
+          <div className="panel-header">
+            <h2 id="tracking-title">Driver location</h2>
+            {lastUpdate && <small className="muted">Updated {formatTime(lastUpdate)}</small>}
           </div>
-        )}
-      </main>
+
+          {!selectedDriverId ? (
+            <div className="empty-state">
+              <p>Pick a driver from the list to follow their position.</p>
+            </div>
+          ) : (
+            <>
+              <div className="tracking-head">
+                <h3>Tracking {selectedName}</h3>
+                <button
+                  type="button"
+                  className="btn btn-quiet btn-small"
+                  onClick={() => handleDriverSelection('')}
+                >
+                  Stop tracking
+                </button>
+              </div>
+
+              {selectedDriverData ? (
+                <div className="tracking-body">
+                  <dl className="spec-list">
+                    <LocationRow
+                      label="Vehicle"
+                      value={selectedDriverData.profile?.vehicle || 'Unknown'}
+                    />
+                    <LocationRow
+                      label="Status"
+                      value={selectedDriverData.isOnline ? 'Online' : 'Offline'}
+                    />
+                    <LocationRow
+                      label="Latitude"
+                      value={formatCoordinate(selectedDriverData.location?.lat)}
+                      mono
+                    />
+                    <LocationRow
+                      label="Longitude"
+                      value={formatCoordinate(selectedDriverData.location?.lng)}
+                      mono
+                    />
+                    <LocationRow
+                      label="Reported"
+                      value={formatTime(selectedDriverData.location?.timestamp)}
+                    />
+                  </dl>
+                  <ServiceAreaMap trail={trail} />
+                </div>
+              ) : (
+                <p className="empty-state">
+                  <span className="loading-spinner" aria-hidden="true" />
+                  Waiting for the next position...
+                </p>
+              )}
+            </>
+          )}
+        </section>
+      </div>
+
+      <div className="toasts" role="status" aria-live="polite">
+        {notifications.map((notification) => (
+          <div key={notification.id} className={`toast toast-${notification.type}`}>
+            {notification.message}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function LocationRow({ label, value, mono = false }) {
   return (
-    <div className="location-item">
+    <div>
       <dt>{label}</dt>
-      <dd className={mono ? 'coordinate' : undefined}>{value}</dd>
+      <dd className={mono ? 'mono' : undefined}>{value}</dd>
     </div>
   );
 }

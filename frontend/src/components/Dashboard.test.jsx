@@ -115,6 +115,49 @@ describe('Dashboard', () => {
     expect(screen.queryByText('40.700000')).not.toBeInTheDocument();
   });
 
+  it('ignores a late fix from the driver it just stopped watching', async () => {
+    renderDashboard();
+    act(() => {
+      socket.serverEmit('connect');
+      socket.serverEmit('online_drivers', ROSTER);
+    });
+    await userEvent.click(screen.getByRole('button', { name: /mike davis/i }));
+
+    act(() =>
+      socket.serverEmit('driver_data', {
+        driverId: 'driver1',
+        profile: ROSTER.drivers[0].profile,
+        location: { lat: 40.6, lng: -74.1, timestamp: '2026-01-01T12:00:10.000Z' },
+        isOnline: true,
+      })
+    );
+
+    expect(screen.queryByText('40.600000')).not.toBeInTheDocument();
+    expect(screen.getByText(/waiting for the next position/i)).toBeInTheDocument();
+  });
+
+  it('draws the recent fixes of the watched driver on the service-area map', async () => {
+    renderDashboard();
+    act(() => {
+      socket.serverEmit('connect');
+      socket.serverEmit('online_drivers', ROSTER);
+    });
+    await userEvent.click(screen.getByRole('button', { name: /john smith/i }));
+
+    for (const lat of [40.7, 40.71, 40.72]) {
+      act(() =>
+        socket.serverEmit('driver_data', {
+          driverId: 'driver1',
+          profile: ROSTER.drivers[0].profile,
+          location: { lat, lng: -73.95, timestamp: '2026-01-01T12:00:10.000Z' },
+          isOnline: true,
+        })
+      );
+    }
+
+    expect(screen.getByRole('img', { name: /3 recent positions/i })).toBeInTheDocument();
+  });
+
   it('reports a connection failure', () => {
     renderDashboard();
     act(() => socket.serverEmit('connect_error', new Error('refused')));

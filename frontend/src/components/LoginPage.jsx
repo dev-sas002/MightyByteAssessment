@@ -45,83 +45,73 @@ function LoginPage({ onLogin }) {
 
   return (
     <div className="login-page">
-      <div className="login-container">
-        <header className="login-header">
-          <h1>Ride Share Dashboard</h1>
-          <p>Monitor drivers and follow their positions in real time</p>
-        </header>
+      <section className="login-intro" aria-labelledby="login-title">
+        <p className="eyebrow">Dispatch</p>
+        <h1 id="login-title">Follow every driver as they move.</h1>
+        <p className="lede">
+          The dashboard lists drivers who have reported a position recently and streams one
+          driver&apos;s fixes to you as they arrive.
+        </p>
+        <ul className="fact-list">
+          <li>
+            <strong>Pushed, not polled.</strong> A fix reaches you the moment the driver sends it.
+          </li>
+          <li>
+            <strong>One stream per driver.</strong> Subscribing joins that driver&apos;s room, so
+            you only receive the traffic you asked for.
+          </li>
+          <li>
+            <strong>Offline notices.</strong> A watched driver who goes quiet is flagged.
+          </li>
+        </ul>
+      </section>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <h2>Sign in</h2>
+      <form onSubmit={handleSubmit} className="panel login-form" aria-labelledby="signin-title">
+        <h2 id="signin-title">Sign in</h2>
 
-          {error && (
-            <div className="error-message" role="alert">
-              {error}
-            </div>
-          )}
-
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              autoComplete="username"
-              value={credentials.username}
-              onChange={handleInputChange}
-              placeholder="driver1"
-              required
-            />
+        {error && (
+          <div className="error-message" role="alert">
+            {error}
           </div>
+        )}
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              autoComplete="current-password"
-              value={credentials.password}
-              onChange={handleInputChange}
-              placeholder="password1"
-              required
-            />
-          </div>
-
-          <button type="submit" className="btn btn-primary" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Open dashboard'}
-          </button>
-        </form>
-
-        <div className="features-grid">
-          <div className="feature-card">
-            <h3>Live tracking</h3>
-            <p>Positions are pushed the moment a driver reports one — no polling.</p>
-          </div>
-
-          <div className="feature-card">
-            <h3>Online roster</h3>
-            <p>See which drivers have reported a position inside the freshness window.</p>
-          </div>
-
-          <div className="feature-card">
-            <h3>Offline alerts</h3>
-            <p>A driver you are watching who goes quiet raises an offline notice.</p>
-          </div>
-
-          <div className="feature-card">
-            <h3>Per-driver streams</h3>
-            <p>Subscribing joins one room, so you only receive the traffic you asked for.</p>
-          </div>
+        <div className="form-group">
+          <label htmlFor="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            autoComplete="username"
+            value={credentials.username}
+            onChange={handleInputChange}
+            placeholder="driver1"
+            required
+          />
         </div>
 
-        <div className="demo-note">
-          <p>
-            <strong>Seeded accounts:</strong> driver1 / password1, driver2 / password2, driver3 /
-            password3. The dashboard authenticates against the same endpoint as the driver app.
-          </p>
+        <div className="form-group">
+          <label htmlFor="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            autoComplete="current-password"
+            value={credentials.password}
+            onChange={handleInputChange}
+            placeholder="password1"
+            required
+          />
         </div>
-      </div>
+
+        <button type="submit" className="btn btn-primary btn-block" disabled={isLoading}>
+          {isLoading ? 'Signing in...' : 'Open dashboard'}
+        </button>
+
+        <p className="demo-note">
+          Demo accounts: <code>driver1</code> to <code>driver3</code> with passwords{' '}
+          <code>password1</code> to <code>password3</code>.
+        </p>
+      </form>
     </div>
   );
 }

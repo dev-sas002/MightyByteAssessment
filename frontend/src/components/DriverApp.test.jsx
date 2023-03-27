@@ -65,7 +65,7 @@ describe('DriverApp', () => {
         location: { lat: 40.75, lng: -73.98, timestamp: '2026-01-01T12:00:00.000Z' },
       })
     );
-    expect(screen.getByText('40.75')).toBeInTheDocument();
+    expect(screen.getByText('40.750000')).toBeInTheDocument();
   });
 
   it('falls back to REST while the socket is not connected', async () => {

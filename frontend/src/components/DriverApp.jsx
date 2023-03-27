@@ -23,6 +23,7 @@ function DriverApp() {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('offline');
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   const socketRef = useRef(null);
   const intervalRef = useRef(null);
@@ -48,6 +49,7 @@ function DriverApp() {
   const handleLogin = async (event) => {
     event.preventDefault();
     setError('');
+    setIsSigningIn(true);
 
     try {
       const response = await axios.post(`${API_BASE_URL}/api/login`, credentials);
@@ -57,6 +59,8 @@ function DriverApp() {
       }
     } catch (requestError) {
       setError(requestError.response?.data?.error || 'Login failed');
+    } finally {
+      setIsSigningIn(false);
     }
   };
 
@@ -128,9 +132,9 @@ function DriverApp() {
   if (!session) {
     return (
       <div className="driver-app">
-        <div className="driver-login">
-          <h1>Driver sign-in</h1>
-          <p>Sign in to start reporting your position.</p>
+        <form className="panel driver-login" onSubmit={handleLogin} aria-labelledby="driver-title">
+          <h1 id="driver-title">Driver sign-in</h1>
+          <p className="muted">Sign in to start reporting your position.</p>
 
           {error && (
             <div className="error-message" role="alert">
@@ -138,76 +142,74 @@ function DriverApp() {
             </div>
           )}
 
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label htmlFor="driver-username">Username</label>
-              <input
-                id="driver-username"
-                type="text"
-                autoComplete="username"
-                value={credentials.username}
-                onChange={(event) =>
-                  setCredentials({ ...credentials, username: event.target.value })
-                }
-                placeholder="driver1"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="driver-password">Password</label>
-              <input
-                id="driver-password"
-                type="password"
-                autoComplete="current-password"
-                value={credentials.password}
-                onChange={(event) =>
-                  setCredentials({ ...credentials, password: event.target.value })
-                }
-                placeholder="password1"
-                required
-              />
-            </div>
-
-            <button type="submit" className="btn btn-primary">
-              Sign in
-            </button>
-          </form>
-
-          <div className="demo-credentials">
-            <h3>Seeded accounts</h3>
-            <ul>
-              <li>driver1 / password1</li>
-              <li>driver2 / password2</li>
-              <li>driver3 / password3</li>
-            </ul>
+          <div className="form-group">
+            <label htmlFor="driver-username">Username</label>
+            <input
+              id="driver-username"
+              type="text"
+              autoComplete="username"
+              value={credentials.username}
+              onChange={(event) => setCredentials({ ...credentials, username: event.target.value })}
+              placeholder="driver1"
+              required
+            />
           </div>
-        </div>
+
+          <div className="form-group">
+            <label htmlFor="driver-password">Password</label>
+            <input
+              id="driver-password"
+              type="password"
+              autoComplete="current-password"
+              value={credentials.password}
+              onChange={(event) => setCredentials({ ...credentials, password: event.target.value })}
+              placeholder="password1"
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary btn-block" disabled={isSigningIn}>
+            {isSigningIn ? 'Signing in...' : 'Sign in'}
+          </button>
+
+          <p className="demo-note">
+            Demo accounts: <code>driver1</code> to <code>driver3</code> with passwords{' '}
+            <code>password1</code> to <code>password3</code>.
+          </p>
+        </form>
       </div>
     );
   }
 
   return (
     <div className="driver-app">
-      <div className="driver-dashboard">
-        <header className="driver-header">
-          <h1>{session.profile.name}</h1>
-          <div className="driver-meta">
-            <p>
-              <strong>Vehicle</strong> {session.profile.vehicle}
-            </p>
-            <p>
-              <strong>License</strong> {session.profile.license}
-            </p>
-            <p>
-              <strong>Status</strong>{' '}
-              <span className={`status ${isSharing ? 'active' : 'inactive'}`}>{status}</span>
-            </p>
+      <section className="panel driver-card" aria-labelledby="driver-name">
+        <header className="driver-card-header">
+          <div>
+            <p className="eyebrow">On shift</p>
+            <h1 id="driver-name">{session.profile.name}</h1>
           </div>
-          <button type="button" onClick={handleSignOut} className="btn btn-danger">
+          <button type="button" onClick={handleSignOut} className="btn btn-quiet">
             Sign out
           </button>
         </header>
+
+        <dl className="spec-list">
+          <div>
+            <dt>Vehicle</dt>
+            <dd>{session.profile.vehicle}</dd>
+          </div>
+          <div>
+            <dt>Plate</dt>
+            <dd className="mono">{session.profile.license}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>
+              <span className={`pill ${isSharing ? 'pill-live' : 'pill-idle'}`}>{status}</span>
+            </dd>
+          </div>
+        </dl>
 
         {error && (
           <div className="error-message" role="alert">
@@ -215,45 +217,50 @@ function DriverApp() {
           </div>
         )}
 
-        <div className="location-controls">
-          {isSharing ? (
-            <button type="button" onClick={stopSharing} className="btn btn-secondary btn-large">
-              Stop sharing location
-            </button>
-          ) : (
-            <button type="button" onClick={startSharing} className="btn btn-primary btn-large">
-              Start sharing location
-            </button>
-          )}
-        </div>
-
-        {currentLocation && (
-          <div className="current-location">
-            <h3>Last reported position</h3>
-            <div className="location-display">
-              <p>
-                <strong>Latitude</strong> {currentLocation.lat}
-              </p>
-              <p>
-                <strong>Longitude</strong> {currentLocation.lng}
-              </p>
-              <p>
-                <strong>Reported</strong> {formatTime(currentLocation.timestamp)}
-              </p>
-            </div>
-          </div>
+        {isSharing ? (
+          <button type="button" onClick={stopSharing} className="btn btn-secondary btn-block">
+            Stop sharing location
+          </button>
+        ) : (
+          <button type="button" onClick={startSharing} className="btn btn-primary btn-block">
+            Start sharing location
+          </button>
         )}
 
-        <div className="instructions">
-          <h3>How this works</h3>
-          <ol>
-            <li>Start sharing to open an authenticated socket to the tracking service.</li>
-            <li>A synthetic position inside the service area is reported every 5 seconds.</li>
-            <li>The dashboard lists you as online and streams those positions to subscribers.</li>
-            <li>Stopping, signing out or closing the tab takes you offline immediately.</li>
-          </ol>
+        <div className="last-fix" aria-live="polite">
+          <h2>Last reported position</h2>
+          {currentLocation ? (
+            <dl className="spec-list">
+              <div>
+                <dt>Latitude</dt>
+                <dd className="mono">{formatCoordinate(currentLocation.lat)}</dd>
+              </div>
+              <div>
+                <dt>Longitude</dt>
+                <dd className="mono">{formatCoordinate(currentLocation.lng)}</dd>
+              </div>
+              <div>
+                <dt>Reported</dt>
+                <dd>{formatTime(currentLocation.timestamp)}</dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="muted">
+              {isSharing ? 'Waiting for the first fix...' : 'Nothing sent yet.'}
+            </p>
+          )}
         </div>
-      </div>
+      </section>
+
+      <aside className="panel how-it-works" aria-labelledby="how-title">
+        <h2 id="how-title">How this works</h2>
+        <ol>
+          <li>Start sharing to open an authenticated socket to the tracking service.</li>
+          <li>A synthetic position inside the service area is reported every 5 seconds.</li>
+          <li>The dashboard lists you as online and streams those positions to subscribers.</li>
+          <li>Stopping, signing out or closing the tab takes you offline immediately.</li>
+        </ol>
+      </aside>
     </div>
   );
 }
@@ -263,6 +270,11 @@ function formatTime(timestamp) {
   if (!timestamp) return 'pending';
   const date = new Date(timestamp);
   return Number.isNaN(date.getTime()) ? 'pending' : date.toLocaleTimeString();
+}
+
+/** @param {number|undefined} value */
+function formatCoordinate(value) {
+  return typeof value === 'number' ? value.toFixed(6) : 'n/a';
 }
 
 export default DriverApp;
