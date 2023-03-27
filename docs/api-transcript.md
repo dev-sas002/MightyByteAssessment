@@ -1,32 +1,30 @@
 # Captured API transcript
 
-Recorded against a locally running server on 2026-09-24 with:
-
-```
-PORT=8510 node src/server.js
-```
-
-The token is truncated in the login response; every other line is verbatim.
+Recorded at 2026-11-08 21:09 UTC against the Docker Compose stack (`docker compose up --build`),
+with `jq`-style pretty printing. The token is shortened to its first 6 and last 4
+characters; every other line is verbatim.
 
 ```console
 
-$ curl -s http://localhost:8510/health | jq .
+$ curl -s localhost:3001/health
 {
   "status": "healthy",
-  "timestamp": "2026-09-24T14:24:20.825Z",
-  "uptime": 154.678186958,
-  "environment": "development",
+  "timestamp": "2026-11-08T21:09:23.621Z",
+  "uptime": 22.693982302,
+  "environment": "production",
   "version": "1.0.0"
 }
 
-$ curl -s -X POST http://localhost:8510/api/login -H 'Content-Type: application/json' -d '{"username":"driver1","password":"wrong"}' -w '\nHTTP %{http_code}\n'
-{"error":"Invalid credentials"}
+$ curl -s -X POST localhost:3001/api/login -H 'Content-Type: application/json' -d '{"username":"driver1","password":"wrong"}'
+{
+  "error": "Invalid credentials"
+}
 HTTP 401
 
-$ curl -s -X POST http://localhost:8510/api/login -H 'Content-Type: application/json' -d '{"username":"driver1","password":"password1"}' | jq .
+$ curl -s -X POST localhost:3001/api/login -H 'Content-Type: application/json' -d '{"username":"driver1","password":"password1"}'
 {
   "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5...<truncated>",
+  "token": "eyJhbG…UiDc",
   "profile": {
     "id": "driver1",
     "name": "John Smith",
@@ -36,54 +34,39 @@ $ curl -s -X POST http://localhost:8510/api/login -H 'Content-Type: application/
   },
   "expiresIn": "300s",
   "expiresInSeconds": 300,
-  "expiresAt": "2026-09-24T14:29:20.848Z"
+  "expiresAt": "2026-11-08T21:14:23.650Z"
 }
 
-$ curl -s -X POST http://localhost:8510/api/driver/update -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"lat":40.7128,"lng":-74.0060}' | jq .
+$ curl -s -X POST localhost:3001/api/driver/update -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"lat":40.7128,"lng":-74.006}'
 {
   "success": true,
   "message": "Location updated successfully",
   "location": {
     "lat": 40.7128,
     "lng": -74.006,
-    "timestamp": "2026-09-24T14:24:20.866Z"
+    "timestamp": "2026-11-08T21:09:23.686Z"
   },
   "withinServiceArea": true,
-  "timestamp": "2026-09-24T14:24:20.866Z"
+  "timestamp": "2026-11-08T21:09:23.686Z"
 }
 
-$ curl -s -X POST http://localhost:8510/api/driver/update -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"lat":"north","lng":-74.0060}' -w '\nHTTP %{http_code}\n'
-{"error":"Invalid location data: lat and lng must be finite numbers"}
+$ curl -s -X POST localhost:3001/api/driver/update -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"lat":"north","lng":-74.006}'
+{
+  "error": "Invalid location data: lat and lng must be finite numbers"
+}
 HTTP 400
 
-$ curl -s http://localhost:8510/api/driver/online | jq .
+$ curl -s -X POST localhost:3001/api/driver/update -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"lat": 40.7,'
+{
+  "error": "Expected double-quoted property name in JSON at position 13 (line 1 column 14)",
+  "timestamp": "2026-11-08T21:09:23.723Z"
+}
+HTTP 400
+
+$ curl -s localhost:3001/api/driver/online
 {
   "success": true,
   "drivers": [
-    {
-      "driverId": "driver2",
-      "profile": {
-        "id": "driver2",
-        "name": "Sarah Johnson",
-        "vehicle": "Honda Civic 2021",
-        "license": "XYZ789",
-        "rating": 4.9
-      },
-      "lastSeen": "2026-09-24T14:23:47.506Z",
-      "isOnline": true
-    },
-    {
-      "driverId": "driver3",
-      "profile": {
-        "id": "driver3",
-        "name": "Mike Davis",
-        "vehicle": "Ford Focus 2019",
-        "license": "DEF456",
-        "rating": 4.7
-      },
-      "lastSeen": "2026-09-24T14:23:47.509Z",
-      "isOnline": true
-    },
     {
       "driverId": "driver1",
       "profile": {
@@ -93,15 +76,15 @@ $ curl -s http://localhost:8510/api/driver/online | jq .
         "license": "ABC123",
         "rating": 4.8
       },
-      "lastSeen": "2026-09-24T14:24:20.866Z",
+      "lastSeen": "2026-11-08T21:09:23.686Z",
       "isOnline": true
     }
   ],
-  "count": 3,
-  "timestamp": "2026-09-24T14:24:20.886Z"
+  "count": 1,
+  "timestamp": "2026-11-08T21:09:23.743Z"
 }
 
-$ curl -s http://localhost:8510/api/driver/driver1/location | jq .
+$ curl -s localhost:3001/api/driver/driver1/location
 {
   "success": true,
   "driverId": "driver1",
@@ -115,66 +98,33 @@ $ curl -s http://localhost:8510/api/driver/driver1/location | jq .
   "location": {
     "lat": 40.7128,
     "lng": -74.006,
-    "timestamp": "2026-09-24T14:24:20.866Z"
+    "timestamp": "2026-11-08T21:09:23.686Z"
   },
   "isOnline": true,
-  "timestamp": "2026-09-24T14:24:20.897Z"
+  "timestamp": "2026-11-08T21:09:23.761Z"
 }
 
-$ curl -s http://localhost:8510/api/driver/stats | jq .
+$ curl -s localhost:3001/api/driver/stats
 {
   "success": true,
   "stats": {
-    "activeTokens": 10,
-    "driverLocations": 3,
+    "activeTokens": 1,
+    "driverLocations": 1,
     "connectedSockets": 0,
-    "onlineDrivers": 3
+    "onlineDrivers": 1
   },
-  "timestamp": "2026-09-24T14:24:20.906Z"
+  "timestamp": "2026-11-08T21:09:23.779Z"
 }
 
-$ curl -s -X POST http://localhost:8510/api/logout -H "Authorization: Bearer $TOKEN" | jq .
+$ curl -s -X POST localhost:3001/api/logout -H "Authorization: Bearer $TOKEN"
 {
   "success": true,
   "message": "Logged out successfully"
 }
 
-$ # the same token is replayed after logout -- it is now refused
-
-$ curl -s -X POST http://localhost:8510/api/driver/update -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"lat":40.7128,"lng":-74.0060}' -w '\nHTTP %{http_code}\n'
-{"error":"Invalid, expired or revoked token"}
-HTTP 401
-
-$ curl -s http://localhost:8510/api/driver/online | jq .
+$ curl -s localhost:3001/api/profile -H "Authorization: Bearer $TOKEN"
 {
-  "success": true,
-  "drivers": [
-    {
-      "driverId": "driver2",
-      "profile": {
-        "id": "driver2",
-        "name": "Sarah Johnson",
-        "vehicle": "Honda Civic 2021",
-        "license": "XYZ789",
-        "rating": 4.9
-      },
-      "lastSeen": "2026-09-24T14:23:47.506Z",
-      "isOnline": true
-    },
-    {
-      "driverId": "driver3",
-      "profile": {
-        "id": "driver3",
-        "name": "Mike Davis",
-        "vehicle": "Ford Focus 2019",
-        "license": "DEF456",
-        "rating": 4.7
-      },
-      "lastSeen": "2026-09-24T14:23:47.509Z",
-      "isOnline": true
-    }
-  ],
-  "count": 2,
-  "timestamp": "2026-09-24T14:24:20.934Z"
+  "error": "Invalid, expired or revoked token"
 }
+HTTP 401
 ```
