@@ -87,9 +87,9 @@ $ curl -s -X POST localhost:3001/api/driver/update \
 {
   "success": true,
   "message": "Location updated successfully",
-  "location": { "lat": 40.7128, "lng": -74.006, "timestamp": "2026-11-08T21:09:23.686Z" },
+  "location": { "lat": 40.7128, "lng": -74.006, "timestamp": "2026-11-08T21:14:06.367Z" },
   "withinServiceArea": true,
-  "timestamp": "2026-11-08T21:09:23.686Z"
+  "timestamp": "2026-11-08T21:14:06.367Z"
 }
 ```
 
